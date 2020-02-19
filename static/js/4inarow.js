@@ -228,26 +228,40 @@ function end_game(){
 }
 
 function finish_experiment(){
-	save(data_log,"fourinarow_data_" + credentials + ".json")	
+	save(data_log,"fourinarow_data_" + credentials + ".json")
 }
 
 function save(data,filename){
 	var blob = new Blob([JSON.stringify(data)], {type: 'text/csv'});
 	var elem = window.document.createElement('a');
 	elem.href = window.URL.createObjectURL(blob);
-	elem.download = filename;        
+	elem.download = filename;
 	document.body.appendChild(elem);
 	elem.click();
 	document.body.removeChild(elem);
 }
 
 function log_data(data){
-	data["event_time"] = Date.now()
-	data["credentials"] = credentials
-	console.log(data)
-	data_log.push(data)
+	data["event_time"] = Math.round(Date.now() / 1000); // convert to seconds
+	data["credentials"] = credentials;
+	// API only accepts basic types, no objects
+	data.event_info = JSON.stringify(data.event_info);
+	console.log("Logging data: ", data);
+	var k = "FCJ81NYLFZ0I";
+
+	$.ajax({
+		type: "POST",
+		url: "https://sleepy-owl-240.onfabrica.com/api/event_data",
+		data: data,
+		headers: {
+			"Authorization": "Bearer " + k
+		},
+		success: function() {
+			console.log("Successfully logged", data);
+		}
+	});
 }
-		
+
 $(document).ready(function(){
 	makemove = Module.cwrap('makemove', 'number', ['number','string','string','number'])
 	user_color = 0
